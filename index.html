@@ -35,7 +35,7 @@
     </script>
 
     <style>
-        /* Ukrycie paska przewijania dla czystego efektu "kiosku" */
+        /* Ukrycie paska przewijania */
         body {
             overflow: hidden; 
         }
@@ -44,53 +44,53 @@
             backdrop-filter: blur(10px);
         }
 
-        /* Chart container adjustments */
+        /* Chart wrapper fills the remaining space precisely */
         .chart-wrapper {
             position: relative;
             width: 100%;
-            height: 100%; /* Fill the available flex space */
-            min-height: 160px;
+            height: 100%;
+            overflow: hidden; /* Prevent spillover */
         }
     </style>
 </head>
 <body class="bg-stone-200 dark:bg-black text-stone-900 dark:text-stone-100 font-sans h-screen w-screen flex flex-col items-center justify-center transition-colors duration-300 overflow-hidden">
 
-    <!-- MAIN CONTAINER (Station Mode) -->
-    <main class="station-card w-[95%] h-[95%] md:w-[90%] md:h-[90%] bg-white dark:bg-stone-900 rounded-3xl shadow-2xl overflow-hidden border-4 border-stone-300 dark:border-stone-800 flex flex-col relative">
+    <!-- MAIN CONTAINER -->
+    <main class="station-card w-[98%] h-[98%] md:w-[92%] md:h-[92%] bg-white dark:bg-stone-900 rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden border-2 md:border-4 border-stone-300 dark:border-stone-800 flex flex-col relative">
         
         <!-- TOP BAR: Controls & Date -->
-        <header class="flex justify-between items-center px-4 py-2 bg-stone-100 dark:bg-stone-950 border-b border-stone-300 dark:border-stone-800 shrink-0 h-14">
+        <header class="flex justify-between items-center px-3 py-1 md:py-2 bg-stone-100 dark:bg-stone-950 border-b border-stone-300 dark:border-stone-800 shrink-0 h-10 md:h-14">
             <div class="flex items-center gap-2 w-1/2">
                 <input type="text" id="city-input" value="Warszawa" 
-                       class="bg-transparent font-bold text-xl md:text-2xl text-stone-800 dark:text-stone-200 w-full focus:outline-none placeholder-stone-400 uppercase tracking-widest" aria-label="Miasto">
+                       class="bg-transparent font-bold text-lg md:text-2xl text-stone-800 dark:text-stone-200 w-full focus:outline-none placeholder-stone-400 uppercase tracking-widest" aria-label="Miasto">
             </div>
             
-            <div class="flex items-center gap-4">
-                <div id="current-date" class="text-xs md:text-sm font-bold uppercase tracking-widest text-stone-500">...</div>
-                <button onclick="toggleTheme()" class="p-2 rounded-full bg-stone-300 dark:bg-stone-800 text-stone-800 dark:text-stone-200">
-                    <svg id="icon-theme" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <div class="flex items-center gap-3 md:gap-4">
+                <div id="current-date" class="text-[10px] md:text-sm font-bold uppercase tracking-widest text-stone-500 whitespace-nowrap">...</div>
+                <button onclick="toggleTheme()" class="p-1 md:p-2 rounded-full bg-stone-300 dark:bg-stone-800 text-stone-800 dark:text-stone-200">
+                    <svg id="icon-theme" class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 </button>
             </div>
         </header>
 
         <!-- MAIN DISPLAY GRID -->
-        <div id="dashboard-content" class="flex-grow grid grid-cols-1 md:grid-cols-2 h-full">
+        <div id="dashboard-content" class="flex-grow grid grid-cols-1 md:grid-cols-2 h-full overflow-hidden">
             
             <!-- LEFT PANEL: Time, Icon, Big Temp -->
-            <div class="flex flex-col justify-center items-center p-2 border-b md:border-b-0 md:border-r border-stone-300 dark:border-stone-800 relative bg-stone-50 dark:bg-stone-900/50">
+            <div class="flex flex-col justify-center items-center p-1 md:p-2 border-b md:border-b-0 md:border-r border-stone-300 dark:border-stone-800 relative bg-stone-50 dark:bg-stone-900/50">
                 
-                <!-- Hidden Refresh Click Area -->
-                <button onclick="updateWeather()" class="absolute top-2 left-2 p-2 opacity-0 w-12 h-12" aria-label="Odśwież"></button>
+                <!-- Hidden Refresh Area -->
+                <button onclick="updateWeather()" class="absolute top-0 left-0 p-4 opacity-0 w-16 h-16" aria-label="Odśwież"></button>
 
                 <!-- CLOCK -->
-                <div id="digital-clock" class="text-6xl md:text-8xl font-black font-mono tracking-tighter text-stone-800 dark:text-stone-100 leading-none mb-4">
+                <div id="digital-clock" class="text-6xl md:text-8xl font-black font-mono tracking-tighter text-stone-800 dark:text-stone-100 leading-none mb-1 md:mb-4">
                     00:00
                 </div>
 
                 <!-- WEATHER ICON & TEMP ROW -->
-                <div class="flex items-center justify-center gap-6 md:gap-10 mt-2">
+                <div class="flex items-center justify-center gap-4 md:gap-10 mt-1 md:mt-2">
                     <!-- Icon Container -->
-                    <div id="weather-icon-container" class="w-24 h-24 md:w-36 md:h-36 text-stone-700 dark:text-stone-200">
+                    <div id="weather-icon-container" class="w-20 h-20 md:w-36 md:h-36 text-stone-700 dark:text-stone-200 shrink-0">
                         <!-- SVG injected by JS -->
                     </div>
 
@@ -103,51 +103,53 @@
                 </div>
 
                 <!-- CONDITION TEXT -->
-                <div id="display-condition" class="text-xl md:text-3xl font-bold text-stone-500 dark:text-stone-400 mt-6 uppercase tracking-widest text-center">
+                <div id="display-condition" class="text-lg md:text-3xl font-bold text-stone-500 dark:text-stone-400 mt-2 md:mt-6 uppercase tracking-widest text-center truncate w-full px-2">
                     Ładowanie...
                 </div>
             </div>
 
             <!-- RIGHT PANEL: Details & Chart -->
-            <div class="flex flex-col h-full bg-white dark:bg-stone-900">
+            <div class="flex flex-col h-full bg-white dark:bg-stone-900 overflow-hidden">
                 
-                <!-- 4-GRID METRICS -->
-                <div class="grid grid-cols-2 h-[45%] border-b border-stone-300 dark:border-stone-800">
+                <!-- 4-GRID METRICS (Height reduced to 40% to save space for chart) -->
+                <div class="grid grid-cols-2 h-[40%] border-b border-stone-300 dark:border-stone-800">
                     <!-- Metric 1 -->
-                    <div class="flex flex-col justify-center items-center border-r border-b border-stone-200 dark:border-stone-800 p-2">
-                        <span class="text-stone-400 text-xs md:text-sm font-bold uppercase">Odczuwalna</span>
-                        <span id="metric-feels-like" class="text-3xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--°</span>
+                    <div class="flex flex-col justify-center items-center border-r border-b border-stone-200 dark:border-stone-800 p-1">
+                        <span class="text-stone-400 text-[10px] md:text-sm font-bold uppercase">Odczuwalna</span>
+                        <span id="metric-feels-like" class="text-2xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--°</span>
                     </div>
                     <!-- Metric 2 -->
-                    <div class="flex flex-col justify-center items-center border-b border-stone-200 dark:border-stone-800 p-2">
-                        <span class="text-stone-400 text-xs md:text-sm font-bold uppercase">Wiatr</span>
+                    <div class="flex flex-col justify-center items-center border-b border-stone-200 dark:border-stone-800 p-1">
+                        <span class="text-stone-400 text-[10px] md:text-sm font-bold uppercase">Wiatr</span>
                         <div class="flex items-baseline gap-1">
-                            <span id="metric-wind" class="text-3xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--</span>
+                            <span id="metric-wind" class="text-2xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--</span>
                             <span class="text-sm font-bold text-stone-500">km/h</span>
                         </div>
                     </div>
                     <!-- Metric 3 -->
-                    <div class="flex flex-col justify-center items-center border-r border-stone-200 dark:border-stone-800 p-2">
-                        <span class="text-stone-400 text-xs md:text-sm font-bold uppercase">Wilgotność</span>
-                        <span id="metric-humidity" class="text-3xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--%</span>
+                    <div class="flex flex-col justify-center items-center border-r border-stone-200 dark:border-stone-800 p-1">
+                        <span class="text-stone-400 text-[10px] md:text-sm font-bold uppercase">Wilgotność</span>
+                        <span id="metric-humidity" class="text-2xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--%</span>
                     </div>
                     <!-- Metric 4 -->
-                    <div class="flex flex-col justify-center items-center p-2">
-                        <span class="text-stone-400 text-xs md:text-sm font-bold uppercase">Opady</span>
+                    <div class="flex flex-col justify-center items-center p-1">
+                        <span class="text-stone-400 text-[10px] md:text-sm font-bold uppercase">Opady</span>
                         <div class="flex items-baseline gap-1">
-                            <span id="metric-precip" class="text-3xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--</span>
+                            <span id="metric-precip" class="text-2xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--</span>
                             <span class="text-sm font-bold text-stone-500">mm</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- CHART AREA -->
-                <div class="h-[55%] p-3 flex flex-col justify-center bg-stone-50 dark:bg-stone-900/30">
-                    <div class="flex justify-between items-center mb-1 px-1">
-                        <span class="text-xs font-bold uppercase text-stone-400">Temp (°C)</span>
-                        <span class="text-xs font-bold uppercase text-blue-500">Opady (%)</span>
+                <!-- CHART AREA (Height increased to 60%) -->
+                <div class="h-[60%] flex flex-col justify-center bg-stone-50 dark:bg-stone-900/30 pb-1 relative">
+                    <!-- Legend -->
+                    <div class="absolute top-1 left-3 right-3 flex justify-between items-center z-10 pointer-events-none">
+                        <span class="text-[10px] font-bold uppercase text-stone-400">Temp</span>
+                        <span class="text-[10px] font-bold uppercase text-blue-500">Opady</span>
                     </div>
-                    <div class="chart-wrapper">
+                    <!-- Wrapper with padding to prevent cut-off -->
+                    <div class="chart-wrapper px-2 pb-2 pt-4">
                         <canvas id="weatherChart"></canvas>
                     </div>
                 </div>
@@ -161,7 +163,7 @@
         // --- ICONS (SVG Mappings) ---
         function getWeatherIcon(code, isDay) {
             const strokeColor = "currentColor";
-            const strokeWidth = 1.8; // Slightly thicker for distance
+            const strokeWidth = 1.8;
             
             const sun = `<svg viewBox="0 0 24 24" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
             const moon = `<svg viewBox="0 0 24 24" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
@@ -193,7 +195,6 @@
             return codes[code] || "Nieznane";
         }
 
-        // --- THEME ---
         const htmlEl = document.documentElement;
         function initTheme() {
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -209,7 +210,6 @@
         }
         initTheme();
 
-        // --- APP ---
         let weatherChartInstance = null;
         let lastChartData = null;
 
@@ -281,19 +281,22 @@
             if (weatherChartInstance) weatherChartInstance.destroy();
 
             const isDark = htmlEl.classList.contains('dark');
-            const colorLine = '#ea580c'; // Orange
-            const colorBar = '#3b82f6'; // Blue
+            const colorLine = '#ea580c'; 
+            const colorBar = '#3b82f6';
             const colorText = isDark ? '#a8a29e' : '#57534e';
             const colorGrid = isDark ? '#292524' : '#e5e7eb';
+            
+            // Adjust font size based on height (responsive check)
+            const isSmallScreen = window.innerHeight < 500;
+            const fontSize = isSmallScreen ? 10 : 12;
 
-            // Filter for readability (every 3rd hour)
             const steps = 3; 
             const filteredLabels = data.labels.filter((_, i) => i % steps === 0);
             const filteredTemps = data.temps.filter((_, i) => i % steps === 0);
             const filteredProbs = data.probs.filter((_, i) => i % steps === 0);
 
             weatherChartInstance = new Chart(ctx, {
-                type: 'bar', // Base type is mixed
+                type: 'bar',
                 data: {
                     labels: filteredLabels,
                     datasets: [
@@ -302,8 +305,8 @@
                             label: 'Temp',
                             data: filteredTemps,
                             borderColor: colorLine,
-                            borderWidth: 4,
-                            pointRadius: 3,
+                            borderWidth: isSmallScreen ? 2 : 4,
+                            pointRadius: isSmallScreen ? 2 : 3,
                             pointBackgroundColor: colorLine,
                             tension: 0.4,
                             yAxisID: 'y',
@@ -316,7 +319,7 @@
                             backgroundColor: colorBar,
                             borderRadius: 4,
                             yAxisID: 'y1',
-                            barThickness: 12, // Visible bars
+                            barThickness: isSmallScreen ? 8 : 12,
                             order: 2
                         }
                     ]
@@ -324,6 +327,11 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            bottom: 5 // Ensure labels aren't cut off at the very bottom
+                        }
+                    },
                     plugins: { 
                         legend: { display: false }, 
                         tooltip: { enabled: false }
@@ -333,20 +341,20 @@
                             grid: { display: false },
                             ticks: { 
                                 color: colorText, 
-                                font: { size: 12, weight: 'bold' } 
+                                font: { size: fontSize, weight: 'bold' } 
                             }
                         },
-                        y: { // Temperature Axis (Left)
+                        y: {
                             display: true,
                             position: 'left',
                             grid: { color: colorGrid },
                             ticks: { 
                                 color: colorText, 
-                                font: { size: 12, weight: 'bold' },
+                                font: { size: fontSize, weight: 'bold' },
                                 callback: function(value) { return value + '°'; }
                             }
                         },
-                        y1: { // Precip Axis (Right)
+                        y1: {
                             display: true,
                             position: 'right',
                             min: 0,
@@ -354,7 +362,7 @@
                             grid: { display: false },
                             ticks: { 
                                 color: colorBar, 
-                                font: { size: 10, weight: 'bold' }, 
+                                font: { size: fontSize - 1, weight: 'bold' }, 
                                 stepSize: 50,
                                 callback: function(value) { return value + '%'; }
                             }
