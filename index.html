@@ -19,7 +19,7 @@
                 extend: {
                     screens: {
                         'landscape': {'raw': '(orientation: landscape)'},
-                        'iphone-landscape': {'raw': '(min-width: 667px) and (orientation: landscape) and (max-height: 500px)'}
+                        'tiny-h': {'raw': '(orientation: landscape) and (max-height: 500px)'}
                     },
                     colors: {
                         stone: {
@@ -69,11 +69,16 @@
         /* Landscape optimization (iPhone 11 style) */
         @media (orientation: landscape) and (max-height: 500px) {
             .chart-container {
-                height: 220px; /* Shorter chart for landscape mobile */
+                height: 200px; /* Even shorter for better fit */
             }
             body {
-                padding-top: 10px;
-                padding-bottom: 10px;
+                padding-top: 5px;
+                padding-bottom: 5px;
+            }
+            #main-wrapper {
+                max-width: 100%;
+                border-radius: 0;
+                border: none;
             }
         }
 
@@ -88,42 +93,33 @@
 
     <!-- 
       Structure Overview:
-      - Main Wrapper: Centers content.
-      - Grid System: 
-        - Portrait: Stacked vertically.
-        - Landscape/Desktop: 2 Columns (Left: Controls/Current, Right: Chart/Details) to fit screen.
+      - Main Wrapper
+      - Header: Only Title and Dark Mode Toggle (Clock removed from here).
+      - Controls
+      - Content Grid:
+        - Left: Temp + Clock (Side by Side) + Stats Grid
+        - Right: Chart
     -->
 
-    <main class="w-full max-w-5xl bg-white dark:bg-stone-900 rounded-2xl shadow-xl overflow-hidden border border-stone-200 dark:border-stone-800 transition-colors duration-300">
+    <main id="main-wrapper" class="w-full max-w-5xl bg-white dark:bg-stone-900 md:rounded-2xl shadow-xl overflow-hidden border-stone-200 dark:border-stone-800 transition-colors duration-300 flex flex-col h-full md:h-auto">
         
-        <!-- HEADER -->
-        <header class="bg-stone-800 dark:bg-stone-950 text-stone-50 p-4 md:p-6 flex justify-between items-center transition-colors duration-300">
+        <!-- HEADER (Slimmed down) -->
+        <header class="bg-stone-800 dark:bg-stone-950 text-stone-50 p-3 md:p-4 flex justify-between items-center transition-colors duration-300 shrink-0">
             <div class="flex items-center gap-4">
-                <div>
-                    <h1 class="text-xl md:text-2xl font-bold tracking-wide">Monitor Atmosferyczny</h1>
-                    <p class="text-stone-400 text-xs md:text-sm hidden sm:block">Panel czasu rzeczywistego</p>
-                </div>
+                <h1 class="text-lg md:text-2xl font-bold tracking-wide">Monitor Atmosferyczny</h1>
             </div>
             
-            <div class="flex items-center gap-4 md:gap-6">
-                <!-- Clock -->
-                <div class="text-right">
-                    <div id="digital-clock" class="text-2xl md:text-3xl font-mono font-semibold tabular-nums leading-none">00:00:00</div>
-                    <div id="current-date" class="text-stone-500 text-[10px] md:text-xs uppercase tracking-wider text-right">Loading...</div>
-                </div>
-
+            <div class="flex items-center gap-4">
                 <!-- Dark Mode Toggle -->
                 <button onclick="toggleTheme()" class="p-2 rounded-full bg-stone-700 hover:bg-stone-600 transition-colors focus:outline-none focus:ring-2 focus:ring-stone-400" aria-label="Przełącz tryb">
-                    <!-- Sun Icon (for Dark Mode) -->
-                    <svg id="icon-sun" class="w-6 h-6 hidden text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    <!-- Moon Icon (for Light Mode) -->
-                    <svg id="icon-moon" class="w-6 h-6 block text-stone-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 24.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    <svg id="icon-sun" class="w-5 h-5 hidden text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg id="icon-moon" class="w-5 h-5 block text-stone-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 24.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                 </button>
             </div>
         </header>
 
-        <!-- CONTROLS (Compact Bar) -->
-        <section class="px-4 py-3 bg-stone-50 dark:bg-stone-800 border-b border-stone-200 dark:border-stone-700 transition-colors duration-300">
+        <!-- CONTROLS -->
+        <section class="px-4 py-2 bg-stone-50 dark:bg-stone-800 border-b border-stone-200 dark:border-stone-700 transition-colors duration-300 shrink-0">
             <div class="flex flex-row gap-2 items-center">
                 <input type="text" id="city-input" value="Warszawa" aria-label="Miasto"
                        class="flex-grow bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-600 text-stone-800 dark:text-stone-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-500 transition-all placeholder-stone-400">
@@ -139,57 +135,55 @@
         </section>
 
         <!-- DASHBOARD CONTENT -->
-        <!-- 
-           Grid Layout Logic:
-           - Default (Mobile Portrait): 1 Column (stacked).
-           - md+ (Tablets/Landscape Mobile): 2 Columns.
-             Col 1: Current Temp & Grid Stats.
-             Col 2: Chart.
-        -->
-        <div id="dashboard-content" class="p-4 md:p-6 opacity-100 transition-opacity duration-500">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
+        <div id="dashboard-content" class="p-4 md:p-6 opacity-100 transition-opacity duration-500 flex-grow overflow-y-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6 h-full">
                 
-                <!-- LEFT COLUMN (Current Status & Metrics) -->
-                <div class="md:col-span-1 lg:col-span-5 flex flex-col justify-between space-y-4 md:space-y-6">
+                <!-- LEFT COLUMN (Info & Stats) -->
+                <div class="md:col-span-1 lg:col-span-5 flex flex-col justify-start space-y-4">
                     
-                    <!-- Big Temp -->
-                    <div class="text-center md:text-left flex flex-col items-center md:items-start p-2">
-                        <h2 id="display-location" class="text-lg md:text-xl text-stone-500 dark:text-stone-400 font-medium">Ładowanie...</h2>
-                        <div class="flex items-start mt-1">
-                            <span id="display-temp" class="text-6xl md:text-7xl font-bold text-stone-800 dark:text-stone-100 tracking-tighter transition-colors">--</span>
-                            <span class="text-3xl md:text-4xl text-stone-400 dark:text-stone-500 mt-2">°C</span>
+                    <!-- Top Section: Temp + Clock Side-by-Side -->
+                    <div class="flex flex-row justify-between items-center bg-stone-50 dark:bg-stone-800/50 p-3 rounded-xl border border-stone-100 dark:border-stone-700/50">
+                        <!-- Temp Side -->
+                        <div class="flex flex-col">
+                            <h2 id="display-location" class="text-sm font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wide truncate max-w-[150px]">Ładowanie...</h2>
+                            <div class="flex items-baseline mt-1">
+                                <span id="display-temp" class="text-5xl md:text-6xl font-bold text-stone-800 dark:text-stone-100 tracking-tighter transition-colors">--</span>
+                                <span class="text-2xl text-stone-400 dark:text-stone-500 ml-1">°C</span>
+                            </div>
+                            <p id="display-condition" class="text-stone-400 dark:text-stone-500 text-sm font-medium">--</p>
                         </div>
-                        <p id="display-condition" class="text-stone-400 dark:text-stone-500 mt-0 font-medium text-lg">--</p>
+                        
+                        <!-- Clock Side (Moved Here) -->
+                        <div class="text-right flex flex-col justify-center pl-2 border-l border-stone-200 dark:border-stone-700">
+                            <div id="digital-clock" class="text-3xl md:text-4xl font-mono font-semibold text-stone-700 dark:text-stone-200 tabular-nums leading-none">00:00</div>
+                            <div id="current-date" class="text-stone-400 dark:text-stone-500 text-[10px] md:text-xs uppercase tracking-wider mt-1">--</div>
+                        </div>
                     </div>
 
                     <!-- Metrics Grid -->
-                    <div class="grid grid-cols-2 gap-3 w-full">
-                        <div class="bg-stone-50 dark:bg-stone-800 p-3 rounded-xl border border-stone-100 dark:border-stone-700 text-center transition-colors">
+                    <div class="grid grid-cols-2 gap-2 w-full">
+                        <div class="bg-stone-50 dark:bg-stone-800 p-2 rounded-lg border border-stone-100 dark:border-stone-700 text-center transition-colors">
                             <p class="text-[10px] text-stone-500 dark:text-stone-400 uppercase font-bold">Odczuwalna</p>
-                            <p id="metric-feels-like" class="text-lg font-semibold text-stone-700 dark:text-stone-200 mt-1">--°</p>
+                            <p id="metric-feels-like" class="text-base font-semibold text-stone-700 dark:text-stone-200 mt-0.5">--°</p>
                         </div>
-                        <div class="bg-stone-50 dark:bg-stone-800 p-3 rounded-xl border border-stone-100 dark:border-stone-700 text-center transition-colors">
+                        <div class="bg-stone-50 dark:bg-stone-800 p-2 rounded-lg border border-stone-100 dark:border-stone-700 text-center transition-colors">
                             <p class="text-[10px] text-stone-500 dark:text-stone-400 uppercase font-bold">Wiatr</p>
-                            <p id="metric-wind" class="text-lg font-semibold text-stone-700 dark:text-stone-200 mt-1">--</p>
+                            <p id="metric-wind" class="text-base font-semibold text-stone-700 dark:text-stone-200 mt-0.5">--</p>
                         </div>
-                        <div class="bg-stone-50 dark:bg-stone-800 p-3 rounded-xl border border-stone-100 dark:border-stone-700 text-center transition-colors">
-                            <p class="text-[10px] text-stone-500 dark:text-stone-400 uppercase font-bold">Opady (h)</p>
-                            <p id="metric-precip" class="text-lg font-semibold text-stone-700 dark:text-stone-200 mt-1">--</p>
+                        <div class="bg-stone-50 dark:bg-stone-800 p-2 rounded-lg border border-stone-100 dark:border-stone-700 text-center transition-colors">
+                            <p class="text-[10px] text-stone-500 dark:text-stone-400 uppercase font-bold">Opady</p>
+                            <p id="metric-precip" class="text-base font-semibold text-stone-700 dark:text-stone-200 mt-0.5">--</p>
                         </div>
-                        <div class="bg-stone-50 dark:bg-stone-800 p-3 rounded-xl border border-stone-100 dark:border-stone-700 text-center transition-colors">
+                        <div class="bg-stone-50 dark:bg-stone-800 p-2 rounded-lg border border-stone-100 dark:border-stone-700 text-center transition-colors">
                             <p class="text-[10px] text-stone-500 dark:text-stone-400 uppercase font-bold">Wilgotność</p>
-                            <p id="metric-humidity" class="text-lg font-semibold text-stone-700 dark:text-stone-200 mt-1">--%</p>
+                            <p id="metric-humidity" class="text-base font-semibold text-stone-700 dark:text-stone-200 mt-0.5">--%</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- RIGHT COLUMN (Chart) -->
                 <div class="md:col-span-1 lg:col-span-7 flex flex-col justify-center">
-                    <div class="flex justify-between items-center mb-2 md:mb-4">
-                        <h3 class="text-base md:text-lg font-bold text-stone-700 dark:text-stone-300">Prognoza 24h</h3>
-                        <span class="text-[10px] text-stone-400 dark:text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded border border-stone-200 dark:border-stone-700">Temp & Deszcz</span>
-                    </div>
-                    <!-- Chart Container with dynamic sizing logic in CSS -->
+                    <!-- Chart Container -->
                     <div class="chart-container bg-white dark:bg-stone-800/50 rounded-xl border border-stone-100 dark:border-stone-700 p-2 shadow-inner transition-colors">
                         <canvas id="weatherChart"></canvas>
                     </div>
@@ -199,8 +193,8 @@
         </div>
 
         <!-- FOOTER -->
-        <footer class="bg-stone-50 dark:bg-stone-950 px-6 py-2 border-t border-stone-200 dark:border-stone-800 flex justify-between items-center text-[10px] md:text-xs text-stone-400 transition-colors duration-300">
-            <span>Dane: Open-Meteo API</span>
+        <footer class="bg-stone-50 dark:bg-stone-950 px-4 py-2 border-t border-stone-200 dark:border-stone-800 flex justify-between items-center text-[10px] text-stone-400 transition-colors duration-300 shrink-0">
+            <span>Open-Meteo API</span>
             <span id="last-updated">Oczekiwanie...</span>
         </footer>
     </main>
@@ -211,7 +205,6 @@
         const iconSun = document.getElementById('icon-sun');
         const iconMoon = document.getElementById('icon-moon');
 
-        // Check local storage or system preference
         function initTheme() {
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 htmlEl.classList.add('dark');
@@ -232,9 +225,7 @@
                 localStorage.theme = 'dark';
                 updateIcons(true);
             }
-            // Trigger chart update to fix colors if chart exists
-            if (weatherChartInstance) {
-                // We need to re-render to pick up new colors
+            if (weatherChartInstance && lastChartData) {
                 updateChart(lastChartData); 
             }
         }
@@ -248,8 +239,6 @@
                 iconMoon.classList.remove('hidden');
             }
         }
-
-        // Initialize theme on load
         initTheme();
 
 
@@ -257,25 +246,30 @@
         
         let weatherChartInstance = null;
         let refreshTimer = null;
-        let lastChartData = null; // Store data for re-rendering on theme change
+        let lastChartData = null; 
 
-        // 1. Clock
         function updateClock() {
             const now = new Date();
-            document.getElementById('digital-clock').textContent = now.toLocaleTimeString('pl-PL');
-            document.getElementById('current-date').textContent = now.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
+            // Show HH:MM:SS on large screens, HH:MM on mobile/small landscape to save space
+            const isSmall = window.innerWidth < 400 || (window.innerWidth < 900 && window.innerHeight < 500);
+            const timeString = now.toLocaleTimeString('pl-PL', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: isSmall ? undefined : '2-digit' 
+            });
+            document.getElementById('digital-clock').textContent = timeString;
+            document.getElementById('current-date').textContent = now.toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short' });
         }
         setInterval(updateClock, 1000);
         updateClock();
+        window.addEventListener('resize', updateClock); // Update format on resize
 
-        // 2. Weather Fetching (Direct API)
         async function fetchWeatherData(city) {
             const dashboard = document.getElementById('dashboard-content');
             
             try {
                 dashboard.classList.add('opacity-50');
                 
-                // Geocoding
                 const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=pl&format=json`;
                 const geoResponse = await fetch(geoUrl);
                 if (!geoResponse.ok) throw new Error("Błąd geolokalizacji");
@@ -293,7 +287,6 @@
                 const lon = location.longitude;
                 const displayName = `${location.name}, ${location.country || ''}`;
 
-                // Weather Data
                 const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,wind_speed_10m&hourly=temperature_2m,precipitation_probability&timezone=auto&forecast_days=1`;
                 
                 const weatherResponse = await fetch(weatherUrl);
@@ -320,21 +313,19 @@
                     }
                 };
 
-                lastChartData = processedData.chart_data; // Save for theme toggle
+                lastChartData = processedData.chart_data; 
                 renderData(processedData);
                 
                 const now = new Date();
-                document.getElementById('last-updated').textContent = `Aktualizacja: ${now.toLocaleTimeString('pl-PL')}`;
+                document.getElementById('last-updated').textContent = `Akt.: ${now.toLocaleTimeString('pl-PL')}`;
                 
             } catch (error) {
                 console.error(error);
-                alert("Wystąpił błąd. Sprawdź konsolę.");
             } finally {
                 dashboard.classList.remove('opacity-50');
             }
         }
 
-        // 3. Rendering
         function renderData(data) {
             document.getElementById('display-location').textContent = data.location;
             document.getElementById('display-temp').textContent = Math.round(data.current.temp);
@@ -349,7 +340,6 @@
             updateChart(data.chart_data);
         }
 
-        // 4. Chart.js (Responsive + Theme Aware)
         function updateChart(chartData) {
             if (!chartData) return;
             const ctx = document.getElementById('weatherChart').getContext('2d');
@@ -358,16 +348,14 @@
                 weatherChartInstance.destroy();
             }
 
-            // Determine colors based on current theme
             const isDark = htmlEl.classList.contains('dark');
-            const gridColor = isDark ? '#44403c' : '#f5f5f4'; // stone-700 vs stone-100
-            const textColor = isDark ? '#a8a29e' : '#78716c'; // stone-400 vs stone-500
+            const gridColor = isDark ? '#44403c' : '#f5f5f4'; 
+            const textColor = isDark ? '#a8a29e' : '#78716c'; 
             const tooltipBg = isDark ? 'rgba(28, 25, 23, 0.95)' : 'rgba(28, 25, 23, 0.9)';
             const tooltipText = '#fafaf9';
 
-            // Create gradient
             const gradientTemp = ctx.createLinearGradient(0, 0, 0, 300);
-            gradientTemp.addColorStop(0, 'rgba(234, 88, 12, 0.5)'); // Orange
+            gradientTemp.addColorStop(0, 'rgba(234, 88, 12, 0.5)'); 
             gradientTemp.addColorStop(1, 'rgba(234, 88, 12, 0.0)');
 
             weatherChartInstance = new Chart(ctx, {
@@ -376,7 +364,7 @@
                     labels: chartData.labels,
                     datasets: [
                         {
-                            label: 'Temperatura (°C)',
+                            label: 'Temp (°C)',
                             data: chartData.temps,
                             borderColor: '#ea580c', 
                             backgroundColor: gradientTemp,
@@ -405,44 +393,39 @@
                     },
                     plugins: {
                         legend: {
-                            display: true,
-                            position: 'bottom',
-                            labels: { color: textColor }
+                            display: false, // Hide legend to save space in small landscape
                         },
                         tooltip: {
                             backgroundColor: tooltipBg,
                             titleColor: tooltipText,
                             bodyColor: tooltipText,
-                            padding: 10,
-                            cornerRadius: 8
+                            padding: 6,
+                            cornerRadius: 6
                         }
                     },
                     scales: {
                         x: {
                             grid: { display: false },
-                            ticks: { color: textColor, maxTicksLimit: 8 }
+                            ticks: { color: textColor, maxTicksLimit: 6, font: {size: 10} }
                         },
                         y: {
                             type: 'linear',
                             display: true,
                             position: 'left',
                             grid: { color: gridColor },
-                            ticks: { color: textColor }
+                            ticks: { color: textColor, font: {size: 10} }
                         },
                         y1: {
                             type: 'linear',
                             display: false,
-                            position: 'right',
                             min: 0,
-                            max: 100,
-                            grid: { display: false }
+                            max: 100
                         }
                     }
                 }
             });
         }
 
-        // 5. Init
         function updateWeather() {
             const city = document.getElementById('city-input').value;
             const interval = parseInt(document.getElementById('refresh-interval').value);
