@@ -2,8 +2,8 @@
 <html lang="pl" class="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Monitor Pogody & Czasu</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Stacja Pogodowa</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,30 +11,23 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Tailwind Config with Dark Mode Support -->
     <script>
         tailwind.config = {
-            darkMode: 'class', // Enables toggle via class="dark" on html tag
+            darkMode: 'class',
             theme: {
                 extend: {
                     screens: {
                         'landscape': {'raw': '(orientation: landscape)'},
-                        'tiny-h': {'raw': '(orientation: landscape) and (max-height: 500px)'}
+                        'short': {'raw': '(max-height: 500px)'}
                     },
                     colors: {
                         stone: {
-                            50: '#fafaf9',
-                            100: '#f5f5f4',
-                            200: '#e7e5e4',
-                            300: '#d6d3d1',
-                            400: '#a8a29e',
-                            500: '#78716c',
-                            600: '#57534e',
-                            700: '#44403c',
-                            800: '#292524',
-                            900: '#1c1917',
+                            850: '#1f1c1a',
                             950: '#0c0a09',
                         }
+                    },
+                    fontFamily: {
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
                     }
                 }
             }
@@ -42,405 +35,341 @@
     </script>
 
     <style>
-        /* Custom scrollbar for webkit */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #a8a29e; 
-            border-radius: 4px;
-        }
-        .dark ::-webkit-scrollbar-thumb {
-            background: #57534e; 
-        }
-
-        /* Chart Container adjustments */
-        .chart-container {
-            position: relative;
-            width: 100%;
-            height: 300px;
-            max-height: 400px;
+        /* Ukrycie paska przewijania dla czystego efektu "kiosku" */
+        body {
+            overflow: hidden; 
         }
         
-        /* Landscape optimization (iPhone 11 style) */
-        @media (orientation: landscape) and (max-height: 500px) {
-            .chart-container {
-                height: 200px; /* Even shorter for better fit */
-            }
-            body {
-                padding-top: 5px;
-                padding-bottom: 5px;
-            }
-            #main-wrapper {
-                max-width: 100%;
-                border-radius: 0;
-                border: none;
-            }
+        .station-card {
+            backdrop-filter: blur(10px);
         }
 
-        @media (min-width: 768px) {
-            .chart-container {
-                height: 350px;
-            }
+        /* Chart container adjustments */
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%; /* Fill the available flex space */
+            min-height: 160px;
         }
     </style>
 </head>
-<body class="bg-stone-100 dark:bg-stone-950 text-stone-800 dark:text-stone-100 font-sans min-h-screen flex flex-col items-center py-4 px-4 transition-colors duration-300">
+<body class="bg-stone-200 dark:bg-black text-stone-900 dark:text-stone-100 font-sans h-screen w-screen flex flex-col items-center justify-center transition-colors duration-300 overflow-hidden">
 
-    <!-- 
-      Structure Overview:
-      - Main Wrapper
-      - Header: Only Title and Dark Mode Toggle (Clock removed from here).
-      - Controls
-      - Content Grid:
-        - Left: Temp + Clock (Side by Side) + Stats Grid
-        - Right: Chart
-    -->
-
-    <main id="main-wrapper" class="w-full max-w-5xl bg-white dark:bg-stone-900 md:rounded-2xl shadow-xl overflow-hidden border-stone-200 dark:border-stone-800 transition-colors duration-300 flex flex-col h-full md:h-auto">
+    <!-- MAIN CONTAINER (Station Mode) -->
+    <main class="station-card w-[95%] h-[95%] md:w-[90%] md:h-[90%] bg-white dark:bg-stone-900 rounded-3xl shadow-2xl overflow-hidden border-4 border-stone-300 dark:border-stone-800 flex flex-col relative">
         
-        <!-- HEADER (Slimmed down) -->
-        <header class="bg-stone-800 dark:bg-stone-950 text-stone-50 p-3 md:p-4 flex justify-between items-center transition-colors duration-300 shrink-0">
-            <div class="flex items-center gap-4">
-                <h1 class="text-lg md:text-2xl font-bold tracking-wide">Monitor Atmosferyczny</h1>
+        <!-- TOP BAR: Controls & Date -->
+        <header class="flex justify-between items-center px-4 py-2 bg-stone-100 dark:bg-stone-950 border-b border-stone-300 dark:border-stone-800 shrink-0 h-14">
+            <div class="flex items-center gap-2 w-1/2">
+                <input type="text" id="city-input" value="Warszawa" 
+                       class="bg-transparent font-bold text-xl md:text-2xl text-stone-800 dark:text-stone-200 w-full focus:outline-none placeholder-stone-400 uppercase tracking-widest" aria-label="Miasto">
             </div>
             
             <div class="flex items-center gap-4">
-                <!-- Dark Mode Toggle -->
-                <button onclick="toggleTheme()" class="p-2 rounded-full bg-stone-700 hover:bg-stone-600 transition-colors focus:outline-none focus:ring-2 focus:ring-stone-400" aria-label="Przełącz tryb">
-                    <svg id="icon-sun" class="w-5 h-5 hidden text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    <svg id="icon-moon" class="w-5 h-5 block text-stone-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 24.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                <div id="current-date" class="text-xs md:text-sm font-bold uppercase tracking-widest text-stone-500">...</div>
+                <button onclick="toggleTheme()" class="p-2 rounded-full bg-stone-300 dark:bg-stone-800 text-stone-800 dark:text-stone-200">
+                    <svg id="icon-theme" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 </button>
             </div>
         </header>
 
-        <!-- CONTROLS -->
-        <section class="px-4 py-2 bg-stone-50 dark:bg-stone-800 border-b border-stone-200 dark:border-stone-700 transition-colors duration-300 shrink-0">
-            <div class="flex flex-row gap-2 items-center">
-                <input type="text" id="city-input" value="Warszawa" aria-label="Miasto"
-                       class="flex-grow bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-600 text-stone-800 dark:text-stone-100 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-500 transition-all placeholder-stone-400">
+        <!-- MAIN DISPLAY GRID -->
+        <div id="dashboard-content" class="flex-grow grid grid-cols-1 md:grid-cols-2 h-full">
+            
+            <!-- LEFT PANEL: Time, Icon, Big Temp -->
+            <div class="flex flex-col justify-center items-center p-2 border-b md:border-b-0 md:border-r border-stone-300 dark:border-stone-800 relative bg-stone-50 dark:bg-stone-900/50">
                 
-                <input type="number" id="refresh-interval" value="15" min="1" max="60" aria-label="Interwał minut"
-                       class="w-16 bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-600 text-stone-800 dark:text-stone-100 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-500 transition-all text-center">
-                
-                <button onclick="updateWeather()" 
-                        class="bg-stone-700 hover:bg-stone-600 dark:bg-stone-600 dark:hover:bg-stone-500 text-white font-medium py-1.5 px-4 rounded-lg text-sm transition-colors shadow-sm whitespace-nowrap">
-                    Start
-                </button>
-            </div>
-        </section>
+                <!-- Hidden Refresh Click Area -->
+                <button onclick="updateWeather()" class="absolute top-2 left-2 p-2 opacity-0 w-12 h-12" aria-label="Odśwież"></button>
 
-        <!-- DASHBOARD CONTENT -->
-        <div id="dashboard-content" class="p-4 md:p-6 opacity-100 transition-opacity duration-500 flex-grow overflow-y-auto">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6 h-full">
-                
-                <!-- LEFT COLUMN (Info & Stats) -->
-                <div class="md:col-span-1 lg:col-span-5 flex flex-col justify-start space-y-4">
-                    
-                    <!-- Top Section: Temp + Clock Side-by-Side -->
-                    <div class="flex flex-row justify-between items-center bg-stone-50 dark:bg-stone-800/50 p-3 rounded-xl border border-stone-100 dark:border-stone-700/50">
-                        <!-- Temp Side -->
-                        <div class="flex flex-col">
-                            <h2 id="display-location" class="text-sm font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wide truncate max-w-[150px]">Ładowanie...</h2>
-                            <div class="flex items-baseline mt-1">
-                                <span id="display-temp" class="text-5xl md:text-6xl font-bold text-stone-800 dark:text-stone-100 tracking-tighter transition-colors">--</span>
-                                <span class="text-2xl text-stone-400 dark:text-stone-500 ml-1">°C</span>
-                            </div>
-                            <p id="display-condition" class="text-stone-400 dark:text-stone-500 text-sm font-medium">--</p>
-                        </div>
-                        
-                        <!-- Clock Side (Moved Here) -->
-                        <div class="text-right flex flex-col justify-center pl-2 border-l border-stone-200 dark:border-stone-700">
-                            <div id="digital-clock" class="text-3xl md:text-4xl font-mono font-semibold text-stone-700 dark:text-stone-200 tabular-nums leading-none">00:00</div>
-                            <div id="current-date" class="text-stone-400 dark:text-stone-500 text-[10px] md:text-xs uppercase tracking-wider mt-1">--</div>
-                        </div>
+                <!-- CLOCK -->
+                <div id="digital-clock" class="text-6xl md:text-8xl font-black font-mono tracking-tighter text-stone-800 dark:text-stone-100 leading-none mb-4">
+                    00:00
+                </div>
+
+                <!-- WEATHER ICON & TEMP ROW -->
+                <div class="flex items-center justify-center gap-6 md:gap-10 mt-2">
+                    <!-- Icon Container -->
+                    <div id="weather-icon-container" class="w-24 h-24 md:w-36 md:h-36 text-stone-700 dark:text-stone-200">
+                        <!-- SVG injected by JS -->
                     </div>
 
-                    <!-- Metrics Grid -->
-                    <div class="grid grid-cols-2 gap-2 w-full">
-                        <div class="bg-stone-50 dark:bg-stone-800 p-2 rounded-lg border border-stone-100 dark:border-stone-700 text-center transition-colors">
-                            <p class="text-[10px] text-stone-500 dark:text-stone-400 uppercase font-bold">Odczuwalna</p>
-                            <p id="metric-feels-like" class="text-base font-semibold text-stone-700 dark:text-stone-200 mt-0.5">--°</p>
-                        </div>
-                        <div class="bg-stone-50 dark:bg-stone-800 p-2 rounded-lg border border-stone-100 dark:border-stone-700 text-center transition-colors">
-                            <p class="text-[10px] text-stone-500 dark:text-stone-400 uppercase font-bold">Wiatr</p>
-                            <p id="metric-wind" class="text-base font-semibold text-stone-700 dark:text-stone-200 mt-0.5">--</p>
-                        </div>
-                        <div class="bg-stone-50 dark:bg-stone-800 p-2 rounded-lg border border-stone-100 dark:border-stone-700 text-center transition-colors">
-                            <p class="text-[10px] text-stone-500 dark:text-stone-400 uppercase font-bold">Opady</p>
-                            <p id="metric-precip" class="text-base font-semibold text-stone-700 dark:text-stone-200 mt-0.5">--</p>
-                        </div>
-                        <div class="bg-stone-50 dark:bg-stone-800 p-2 rounded-lg border border-stone-100 dark:border-stone-700 text-center transition-colors">
-                            <p class="text-[10px] text-stone-500 dark:text-stone-400 uppercase font-bold">Wilgotność</p>
-                            <p id="metric-humidity" class="text-base font-semibold text-stone-700 dark:text-stone-200 mt-0.5">--%</p>
+                    <div class="flex flex-col leading-none">
+                        <div class="flex items-start">
+                            <span id="display-temp" class="text-7xl md:text-9xl font-black tracking-tighter text-stone-900 dark:text-white">--</span>
+                            <span class="text-3xl md:text-5xl font-bold text-stone-500 dark:text-stone-400 mt-2 md:mt-4">°</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- RIGHT COLUMN (Chart) -->
-                <div class="md:col-span-1 lg:col-span-7 flex flex-col justify-center">
-                    <!-- Chart Container -->
-                    <div class="chart-container bg-white dark:bg-stone-800/50 rounded-xl border border-stone-100 dark:border-stone-700 p-2 shadow-inner transition-colors">
+                <!-- CONDITION TEXT -->
+                <div id="display-condition" class="text-xl md:text-3xl font-bold text-stone-500 dark:text-stone-400 mt-6 uppercase tracking-widest text-center">
+                    Ładowanie...
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: Details & Chart -->
+            <div class="flex flex-col h-full bg-white dark:bg-stone-900">
+                
+                <!-- 4-GRID METRICS -->
+                <div class="grid grid-cols-2 h-[45%] border-b border-stone-300 dark:border-stone-800">
+                    <!-- Metric 1 -->
+                    <div class="flex flex-col justify-center items-center border-r border-b border-stone-200 dark:border-stone-800 p-2">
+                        <span class="text-stone-400 text-xs md:text-sm font-bold uppercase">Odczuwalna</span>
+                        <span id="metric-feels-like" class="text-3xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--°</span>
+                    </div>
+                    <!-- Metric 2 -->
+                    <div class="flex flex-col justify-center items-center border-b border-stone-200 dark:border-stone-800 p-2">
+                        <span class="text-stone-400 text-xs md:text-sm font-bold uppercase">Wiatr</span>
+                        <div class="flex items-baseline gap-1">
+                            <span id="metric-wind" class="text-3xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--</span>
+                            <span class="text-sm font-bold text-stone-500">km/h</span>
+                        </div>
+                    </div>
+                    <!-- Metric 3 -->
+                    <div class="flex flex-col justify-center items-center border-r border-stone-200 dark:border-stone-800 p-2">
+                        <span class="text-stone-400 text-xs md:text-sm font-bold uppercase">Wilgotność</span>
+                        <span id="metric-humidity" class="text-3xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--%</span>
+                    </div>
+                    <!-- Metric 4 -->
+                    <div class="flex flex-col justify-center items-center p-2">
+                        <span class="text-stone-400 text-xs md:text-sm font-bold uppercase">Opady</span>
+                        <div class="flex items-baseline gap-1">
+                            <span id="metric-precip" class="text-3xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--</span>
+                            <span class="text-sm font-bold text-stone-500">mm</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHART AREA -->
+                <div class="h-[55%] p-3 flex flex-col justify-center bg-stone-50 dark:bg-stone-900/30">
+                    <div class="flex justify-between items-center mb-1 px-1">
+                        <span class="text-xs font-bold uppercase text-stone-400">Temp (°C)</span>
+                        <span class="text-xs font-bold uppercase text-blue-500">Opady (%)</span>
+                    </div>
+                    <div class="chart-wrapper">
                         <canvas id="weatherChart"></canvas>
                     </div>
                 </div>
-
             </div>
         </div>
-
-        <!-- FOOTER -->
-        <footer class="bg-stone-50 dark:bg-stone-950 px-4 py-2 border-t border-stone-200 dark:border-stone-800 flex justify-between items-center text-[10px] text-stone-400 transition-colors duration-300 shrink-0">
-            <span>Open-Meteo API</span>
-            <span id="last-updated">Oczekiwanie...</span>
-        </footer>
     </main>
 
-    <script>
-        // --- THEME LOGIC ---
-        const htmlEl = document.documentElement;
-        const iconSun = document.getElementById('icon-sun');
-        const iconMoon = document.getElementById('icon-moon');
+    <input type="hidden" id="refresh-interval" value="15">
 
+    <script>
+        // --- ICONS (SVG Mappings) ---
+        function getWeatherIcon(code, isDay) {
+            const strokeColor = "currentColor";
+            const strokeWidth = 1.8; // Slightly thicker for distance
+            
+            const sun = `<svg viewBox="0 0 24 24" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+            const moon = `<svg viewBox="0 0 24 24" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+            const cloud = `<svg viewBox="0 0 24 24" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>`;
+            const cloudSun = `<svg viewBox="0 0 24 24" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><circle cx="12" cy="12" r="5" transform="translate(-8 -8) scale(0.6)"></circle></svg>`;
+            const rain = `<svg viewBox="0 0 24 24" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"><path d="M16 13v6"></path><path d="M8 13v6"></path><path d="M12 15v6"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg>`;
+            const snow = `<svg viewBox="0 0 24 24" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="8" y1="20" x2="8" y2="20"></line><line x1="12" y1="18" x2="12" y2="18"></line><line x1="12" y1="22" x2="12" y2="22"></line><line x1="16" y1="16" x2="16" y2="16"></line><line x1="16" y1="20" x2="16" y2="20"></line></svg>`;
+            const thunder = `<svg viewBox="0 0 24 24" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"></path><polyline points="13 11 9 17 15 17 11 23"></polyline></svg>`;
+            const fog = `<svg viewBox="0 0 24 24" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h16"></path><path d="M4 18h16"></path><path d="M4 10h16"></path><path d="M4 6h16"></path></svg>`;
+
+            if (code === 0) return isDay ? sun : moon;
+            if (code >= 1 && code <= 3) return isDay ? cloudSun : cloud;
+            if (code >= 45 && code <= 48) return fog;
+            if (code >= 51 && code <= 67) return rain;
+            if (code >= 71 && code <= 77) return snow;
+            if (code >= 80 && code <= 82) return rain;
+            if (code >= 95) return thunder;
+            return cloud;
+        }
+
+        function getConditionText(code) {
+            const codes = {
+                0: "Czyste niebo", 1: "Lekkie zachm.", 2: "Część. zachm.", 3: "Pochmurno",
+                45: "Mgła", 48: "Mgła", 51: "Mżawka", 53: "Mżawka", 55: "Mżawka",
+                61: "Lekki deszcz", 63: "Deszcz", 65: "Ulewa", 71: "Śnieg", 73: "Śnieg",
+                75: "Śnieżyca", 80: "Przelotny deszcz", 81: "Deszcz", 82: "Ulewa",
+                95: "Burza", 96: "Burza", 99: "Silna burza"
+            };
+            return codes[code] || "Nieznane";
+        }
+
+        // --- THEME ---
+        const htmlEl = document.documentElement;
         function initTheme() {
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 htmlEl.classList.add('dark');
-                updateIcons(true);
             } else {
                 htmlEl.classList.remove('dark');
-                updateIcons(false);
             }
         }
-
         function toggleTheme() {
-            if (htmlEl.classList.contains('dark')) {
-                htmlEl.classList.remove('dark');
-                localStorage.theme = 'light';
-                updateIcons(false);
-            } else {
-                htmlEl.classList.add('dark');
-                localStorage.theme = 'dark';
-                updateIcons(true);
-            }
-            if (weatherChartInstance && lastChartData) {
-                updateChart(lastChartData); 
-            }
-        }
-
-        function updateIcons(isDark) {
-            if (isDark) {
-                iconSun.classList.remove('hidden');
-                iconMoon.classList.add('hidden');
-            } else {
-                iconSun.classList.add('hidden');
-                iconMoon.classList.remove('hidden');
-            }
+            htmlEl.classList.toggle('dark');
+            localStorage.theme = htmlEl.classList.contains('dark') ? 'dark' : 'light';
+            if (weatherChartInstance && lastChartData) updateChart(lastChartData);
         }
         initTheme();
 
-
-        // --- APPLICATION LOGIC ---
-        
+        // --- APP ---
         let weatherChartInstance = null;
-        let refreshTimer = null;
-        let lastChartData = null; 
+        let lastChartData = null;
 
         function updateClock() {
             const now = new Date();
-            // Show HH:MM:SS on large screens, HH:MM on mobile/small landscape to save space
-            const isSmall = window.innerWidth < 400 || (window.innerWidth < 900 && window.innerHeight < 500);
-            const timeString = now.toLocaleTimeString('pl-PL', { 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: isSmall ? undefined : '2-digit' 
-            });
-            document.getElementById('digital-clock').textContent = timeString;
-            document.getElementById('current-date').textContent = now.toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short' });
+            document.getElementById('digital-clock').textContent = now.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('current-date').textContent = now.toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'long' });
         }
         setInterval(updateClock, 1000);
         updateClock();
-        window.addEventListener('resize', updateClock); // Update format on resize
 
         async function fetchWeatherData(city) {
             const dashboard = document.getElementById('dashboard-content');
-            
             try {
-                dashboard.classList.add('opacity-50');
+                dashboard.style.opacity = '0.7';
                 
                 const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=pl&format=json`;
-                const geoResponse = await fetch(geoUrl);
-                if (!geoResponse.ok) throw new Error("Błąd geolokalizacji");
+                const geoRes = await fetch(geoUrl);
+                const geoData = await geoRes.json();
                 
-                const geoData = await geoResponse.json();
-                
-                if (!geoData.results || geoData.results.length === 0) {
-                    alert("Nie znaleziono lokalizacji.");
-                    dashboard.classList.remove('opacity-50');
-                    return;
-                }
+                if (!geoData.results?.length) throw new Error("Brak miasta");
+                const { latitude: lat, longitude: lon, name } = geoData.results[0];
 
-                const location = geoData.results[0];
-                const lat = location.latitude;
-                const lon = location.longitude;
-                const displayName = `${location.name}, ${location.country || ''}`;
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weathercode,wind_speed_10m&hourly=temperature_2m,precipitation_probability&timezone=auto&forecast_days=1`;
+                const wRes = await fetch(weatherUrl);
+                const wData = await wRes.json();
 
-                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,wind_speed_10m&hourly=temperature_2m,precipitation_probability&timezone=auto&forecast_days=1`;
-                
-                const weatherResponse = await fetch(weatherUrl);
-                if (!weatherResponse.ok) throw new Error("Błąd pobierania pogody");
-
-                const wData = await weatherResponse.json();
-                const current = wData.current;
-                const hourly = wData.hourly;
-
-                const processedData = {
-                    location: displayName,
+                renderData({
+                    location: `${name}`,
                     current: {
-                        temp: current.temperature_2m,
-                        feels_like: current.apparent_temperature,
-                        humidity: current.relative_humidity_2m,
-                        wind_speed: current.wind_speed_10m,
-                        precip: current.precipitation,
-                        is_day: current.is_day
+                        temp: Math.round(wData.current.temperature_2m),
+                        feels_like: Math.round(wData.current.apparent_temperature),
+                        humidity: wData.current.relative_humidity_2m,
+                        wind: Math.round(wData.current.wind_speed_10m),
+                        precip: wData.current.precipitation,
+                        is_day: wData.current.is_day,
+                        code: wData.current.weathercode
                     },
-                    chart_data: {
-                        labels: hourly.time.map(t => t.slice(-5)),
-                        temps: hourly.temperature_2m,
-                        precip_prob: hourly.precipitation_probability
+                    chart: {
+                        labels: wData.hourly.time.map(t => t.slice(-5)),
+                        temps: wData.hourly.temperature_2m,
+                        probs: wData.hourly.precipitation_probability
                     }
-                };
-
-                lastChartData = processedData.chart_data; 
-                renderData(processedData);
-                
-                const now = new Date();
-                document.getElementById('last-updated').textContent = `Akt.: ${now.toLocaleTimeString('pl-PL')}`;
-                
-            } catch (error) {
-                console.error(error);
+                });
+            } catch (e) {
+                console.error(e);
             } finally {
-                dashboard.classList.remove('opacity-50');
+                dashboard.style.opacity = '1';
             }
         }
 
         function renderData(data) {
-            document.getElementById('display-location').textContent = data.location;
-            document.getElementById('display-temp').textContent = Math.round(data.current.temp);
-            document.getElementById('metric-feels-like').textContent = `${Math.round(data.current.feels_like)}°`;
-            document.getElementById('metric-wind').textContent = `${data.current.wind_speed} km/h`;
-            document.getElementById('metric-precip').textContent = `${data.current.precip} mm`;
+            document.getElementById('city-input').value = data.location;
+            document.getElementById('display-temp').textContent = data.current.temp;
+            document.getElementById('display-condition').textContent = getConditionText(data.current.code);
+            document.getElementById('weather-icon-container').innerHTML = getWeatherIcon(data.current.code, data.current.is_day === 1);
+            document.getElementById('metric-feels-like').textContent = `${data.current.feels_like}°`;
+            document.getElementById('metric-wind').textContent = `${data.current.wind}`;
             document.getElementById('metric-humidity').textContent = `${data.current.humidity}%`;
-            
-            const isDay = data.current.is_day === 1;
-            document.getElementById('display-condition').textContent = isDay ? "Dzień" : "Noc";
+            document.getElementById('metric-precip').textContent = `${data.current.precip}`;
 
-            updateChart(data.chart_data);
+            lastChartData = data.chart;
+            updateChart(data.chart);
         }
 
-        function updateChart(chartData) {
-            if (!chartData) return;
+        function updateChart(data) {
+            if (!data) return;
             const ctx = document.getElementById('weatherChart').getContext('2d');
-            
-            if (weatherChartInstance) {
-                weatherChartInstance.destroy();
-            }
+            if (weatherChartInstance) weatherChartInstance.destroy();
 
             const isDark = htmlEl.classList.contains('dark');
-            const gridColor = isDark ? '#44403c' : '#f5f5f4'; 
-            const textColor = isDark ? '#a8a29e' : '#78716c'; 
-            const tooltipBg = isDark ? 'rgba(28, 25, 23, 0.95)' : 'rgba(28, 25, 23, 0.9)';
-            const tooltipText = '#fafaf9';
+            const colorLine = '#ea580c'; // Orange
+            const colorBar = '#3b82f6'; // Blue
+            const colorText = isDark ? '#a8a29e' : '#57534e';
+            const colorGrid = isDark ? '#292524' : '#e5e7eb';
 
-            const gradientTemp = ctx.createLinearGradient(0, 0, 0, 300);
-            gradientTemp.addColorStop(0, 'rgba(234, 88, 12, 0.5)'); 
-            gradientTemp.addColorStop(1, 'rgba(234, 88, 12, 0.0)');
+            // Filter for readability (every 3rd hour)
+            const steps = 3; 
+            const filteredLabels = data.labels.filter((_, i) => i % steps === 0);
+            const filteredTemps = data.temps.filter((_, i) => i % steps === 0);
+            const filteredProbs = data.probs.filter((_, i) => i % steps === 0);
 
             weatherChartInstance = new Chart(ctx, {
-                type: 'line',
+                type: 'bar', // Base type is mixed
                 data: {
-                    labels: chartData.labels,
+                    labels: filteredLabels,
                     datasets: [
                         {
-                            label: 'Temp (°C)',
-                            data: chartData.temps,
-                            borderColor: '#ea580c', 
-                            backgroundColor: gradientTemp,
-                            borderWidth: 2,
+                            type: 'line',
+                            label: 'Temp',
+                            data: filteredTemps,
+                            borderColor: colorLine,
+                            borderWidth: 4,
+                            pointRadius: 3,
+                            pointBackgroundColor: colorLine,
                             tension: 0.4,
-                            fill: true,
-                            yAxisID: 'y'
+                            yAxisID: 'y',
+                            order: 1
                         },
                         {
-                            label: 'Deszcz (%)',
-                            data: chartData.precip_prob,
-                            borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                            borderWidth: 1,
                             type: 'bar',
-                            yAxisID: 'y1'
+                            label: 'Opady (%)',
+                            data: filteredProbs,
+                            backgroundColor: colorBar,
+                            borderRadius: 4,
+                            yAxisID: 'y1',
+                            barThickness: 12, // Visible bars
+                            order: 2
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
-                    plugins: {
-                        legend: {
-                            display: false, // Hide legend to save space in small landscape
-                        },
-                        tooltip: {
-                            backgroundColor: tooltipBg,
-                            titleColor: tooltipText,
-                            bodyColor: tooltipText,
-                            padding: 6,
-                            cornerRadius: 6
-                        }
+                    plugins: { 
+                        legend: { display: false }, 
+                        tooltip: { enabled: false }
                     },
                     scales: {
                         x: {
                             grid: { display: false },
-                            ticks: { color: textColor, maxTicksLimit: 6, font: {size: 10} }
+                            ticks: { 
+                                color: colorText, 
+                                font: { size: 12, weight: 'bold' } 
+                            }
                         },
-                        y: {
-                            type: 'linear',
+                        y: { // Temperature Axis (Left)
                             display: true,
                             position: 'left',
-                            grid: { color: gridColor },
-                            ticks: { color: textColor, font: {size: 10} }
+                            grid: { color: colorGrid },
+                            ticks: { 
+                                color: colorText, 
+                                font: { size: 12, weight: 'bold' },
+                                callback: function(value) { return value + '°'; }
+                            }
                         },
-                        y1: {
-                            type: 'linear',
-                            display: false,
+                        y1: { // Precip Axis (Right)
+                            display: true,
+                            position: 'right',
                             min: 0,
-                            max: 100
+                            max: 100,
+                            grid: { display: false },
+                            ticks: { 
+                                color: colorBar, 
+                                font: { size: 10, weight: 'bold' }, 
+                                stepSize: 50,
+                                callback: function(value) { return value + '%'; }
+                            }
                         }
                     }
                 }
             });
         }
 
-        function updateWeather() {
-            const city = document.getElementById('city-input').value;
-            const interval = parseInt(document.getElementById('refresh-interval').value);
-            fetchWeatherData(city);
-            if (refreshTimer) clearInterval(refreshTimer);
-            if (interval > 0) {
-                refreshTimer = setInterval(() => {
-                    fetchWeatherData(city);
-                }, interval * 60 * 1000);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            updateWeather();
+        document.getElementById('city-input').addEventListener('change', function() {
+            fetchWeatherData(this.value);
         });
+        fetchWeatherData(document.getElementById('city-input').value);
+        setInterval(function() { fetchWeatherData(document.getElementById('city-input').value); }, 15 * 60 * 1000);
+
     </script>
 </body>
 </html>
