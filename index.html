@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Pogody & Czasu</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        stone: {
+                            50: '#fafaf9',
+                            100: '#f5f5f4',
+                            200: '#e7e5e4',
+                            300: '#d6d3d1',
+                            400: '#a8a29e',
+                            500: '#78716c',
+                            600: '#57534e',
+                            700: '#44403c',
+                            800: '#292524',
+                            900: '#1c1917',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Chart Container Style override for responsive handling -->
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        /* Hide scrollbar for clean UI */
+        body {
+            scrollbar-width: thin;
+            scrollbar-color: #a8a29e #f5f5f4;
+        }
+    </style>
+</head>
+<body class="bg-stone-100 text-stone-800 font-sans min-h-screen flex flex-col items-center py-8 px-4">
+
+    <!-- Application Structure Plan:
+         1. Header: Digital Clock (Real-time) and Title.
+         2. Controls: Settings for Location and Refresh Interval.
+         3. Main Dashboard:
+            - Primary: Large Temperature & Location.
+            - Secondary: Grid of details (Wind, Rain, Humidity, Feels Like).
+            - Analysis: Chart showing 24h trend.
+         4. Footer: Status/Last Updated.
+    -->
+
+    <!-- Chosen Palette: Warm Neutrals (Stone) for a calm, professional dashboard look. -->
+
+    <main class="w-full max-w-3xl bg-white rounded-2xl shadow-xl overflow-hidden border border-stone-200">
+        
+        <!-- Section 1: Header & Time -->
+        <header class="bg-stone-800 text-stone-50 p-6 flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold tracking-wide">Monitor Atmosferyczny</h1>
+                <p class="text-stone-400 text-sm">Panel czasu rzeczywistego</p>
+            </div>
+            <div class="mt-4 md:mt-0 text-right">
+                <div id="digital-clock" class="text-4xl font-mono font-semibold tabular-nums">00:00:00</div>
+                <div id="current-date" class="text-stone-400 text-sm uppercase tracking-wider">Loading...</div>
+            </div>
+        </header>
+
+        <!-- Section 2: Controls -->
+        <!-- Visualization & Content Choices: 
+             Goal: Allow user configuration.
+             Method: Flexbox form with clear inputs.
+             Interaction: 'Update' button triggers API fetch.
+        -->
+        <section class="p-6 bg-stone-50 border-b border-stone-200">
+            <div class="flex flex-col md:flex-row gap-4 items-end">
+                <div class="flex-grow w-full">
+                    <label class="block text-xs font-bold text-stone-500 uppercase mb-1">Lokalizacja (Miasto)</label>
+                    <input type="text" id="city-input" value="Warszawa" 
+                           class="w-full bg-white border border-stone-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-stone-500 transition-shadow">
+                </div>
+                <div class="w-full md:w-1/3">
+                    <label class="block text-xs font-bold text-stone-500 uppercase mb-1">Odświeżanie (minuty)</label>
+                    <input type="number" id="refresh-interval" value="15" min="1" max="60"
+                           class="w-full bg-white border border-stone-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-stone-500 transition-shadow">
+                </div>
+                <button onclick="updateWeather()" 
+                        class="w-full md:w-auto bg-stone-700 hover:bg-stone-600 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200 shadow-sm">
+                    Aktualizuj
+                </button>
+            </div>
+        </section>
+
+        <!-- Section 3: Data Dashboard -->
+        <div id="dashboard-content" class="p-6 space-y-8 opacity-100 transition-opacity duration-500">
+            
+            <!-- Primary Metric: Temperature -->
+            <div class="text-center py-4">
+                <h2 id="display-location" class="text-xl text-stone-500 font-medium">Ładowanie danych...</h2>
+                <div class="flex justify-center items-start mt-2">
+                    <span id="display-temp" class="text-7xl font-bold text-stone-800 tracking-tighter">--</span>
+                    <span class="text-4xl text-stone-400 mt-2">°C</span>
+                </div>
+                <p id="display-condition" class="text-stone-400 mt-2 font-medium">--</p>
+            </div>
+
+            <!-- Secondary Metrics: Grid -->
+            <!-- Visualization: Simple cards with clear labels and large values for readability. -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-stone-50 p-4 rounded-xl border border-stone-100 text-center">
+                    <p class="text-xs text-stone-500 uppercase font-bold">Odczuwalna</p>
+                    <p id="metric-feels-like" class="text-xl font-semibold text-stone-700 mt-1">--°</p>
+                </div>
+                <div class="bg-stone-50 p-4 rounded-xl border border-stone-100 text-center">
+                    <p class="text-xs text-stone-500 uppercase font-bold">Wiatr</p>
+                    <p id="metric-wind" class="text-xl font-semibold text-stone-700 mt-1">-- km/h</p>
+                </div>
+                <div class="bg-stone-50 p-4 rounded-xl border border-stone-100 text-center">
+                    <p class="text-xs text-stone-500 uppercase font-bold">Opady (h)</p>
+                    <p id="metric-precip" class="text-xl font-semibold text-stone-700 mt-1">-- mm</p>
+                </div>
+                <div class="bg-stone-50 p-4 rounded-xl border border-stone-100 text-center">
+                    <p class="text-xs text-stone-500 uppercase font-bold">Wilgotność</p>
+                    <p id="metric-humidity" class="text-xl font-semibold text-stone-700 mt-1">--%</p>
+                </div>
+            </div>
+
+            <!-- Analysis: 24h Trend Chart -->
+            <!-- Visualization: Line chart to show trend. Chart.js is used here (Canvas). 
+                 Container is styled to be responsive.
+            -->
+            <div class="mt-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-stone-700">Prognoza 24h</h3>
+                    <span class="text-xs text-stone-400 bg-stone-100 px-2 py-1 rounded">Temperatura & Szansa na deszcz</span>
+                </div>
+                <div class="chart-container bg-white rounded-xl border border-stone-100 p-2 shadow-inner">
+                    <canvas id="weatherChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-stone-50 px-6 py-3 border-t border-stone-200 flex justify-between items-center text-xs text-stone-400">
+            <span>Dane: Open-Meteo API</span>
+            <span id="last-updated">Oczekiwanie...</span>
+        </footer>
+    </main>
+
+    <!-- CONFIRMATION: NO SVG graphics used in HTML body (using Unicode/CSS). NO Mermaid JS used. -->
+
+    <script>
+        // --- Application Logic ---
+        
+        let weatherChartInstance = null;
+        let refreshTimer = null;
+
+        // 1. Clock Functionality
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('digital-clock').textContent = now.toLocaleTimeString('pl-PL');
+            document.getElementById('current-date').textContent = now.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // 2. Weather Fetching Logic (Direct API - Fixes Preview Error)
+        async function fetchWeatherData(city) {
+            const dashboard = document.getElementById('dashboard-content');
+            
+            try {
+                // Visual feedback for loading
+                dashboard.classList.add('opacity-50');
+                
+                // Step 1: Geocoding (Direct call to Open-Meteo)
+                const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=pl&format=json`;
+                const geoResponse = await fetch(geoUrl);
+                if (!geoResponse.ok) throw new Error("Błąd geolokalizacji");
+                
+                const geoData = await geoResponse.json();
+                
+                if (!geoData.results || geoData.results.length === 0) {
+                    alert("Nie znaleziono lokalizacji.");
+                    dashboard.classList.remove('opacity-50');
+                    return;
+                }
+
+                const location = geoData.results[0];
+                const lat = location.latitude;
+                const lon = location.longitude;
+                const displayName = `${location.name}, ${location.country || ''}`;
+
+                // Step 2: Fetch Weather Data (Direct call to Open-Meteo)
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,wind_speed_10m&hourly=temperature_2m,precipitation_probability&timezone=auto&forecast_days=1`;
+                
+                const weatherResponse = await fetch(weatherUrl);
+                if (!weatherResponse.ok) throw new Error("Błąd pobierania pogody");
+
+                const wData = await weatherResponse.json();
+
+                // Step 3: Map Data to App Structure
+                const current = wData.current;
+                const hourly = wData.hourly;
+
+                const processedData = {
+                    location: displayName,
+                    current: {
+                        temp: current.temperature_2m,
+                        feels_like: current.apparent_temperature,
+                        humidity: current.relative_humidity_2m,
+                        wind_speed: current.wind_speed_10m,
+                        precip: current.precipitation,
+                        is_day: current.is_day
+                    },
+                    chart_data: {
+                        labels: hourly.time.map(t => t.slice(-5)), // Extract HH:MM
+                        temps: hourly.temperature_2m,
+                        precip_prob: hourly.precipitation_probability
+                    }
+                };
+
+                renderData(processedData);
+                
+                // Update timestamp
+                const now = new Date();
+                document.getElementById('last-updated').textContent = `Aktualizacja: ${now.toLocaleTimeString('pl-PL')}`;
+                
+            } catch (error) {
+                console.error(error);
+                alert("Wystąpił błąd podczas pobierania danych. Sprawdź konsolę.");
+            } finally {
+                dashboard.classList.remove('opacity-50');
+            }
+        }
+
+        // 3. Rendering Logic
+        function renderData(data) {
+            // Text Metrics
+            document.getElementById('display-location').textContent = data.location;
+            document.getElementById('display-temp').textContent = Math.round(data.current.temp);
+            document.getElementById('metric-feels-like').textContent = `${Math.round(data.current.feels_like)}°`;
+            document.getElementById('metric-wind').textContent = `${data.current.wind_speed} km/h`;
+            document.getElementById('metric-precip').textContent = `${data.current.precip} mm`;
+            document.getElementById('metric-humidity').textContent = `${data.current.humidity}%`;
+            
+            const isDay = data.current.is_day === 1;
+            document.getElementById('display-condition').textContent = isDay ? "Dzień" : "Noc";
+
+            // Chart Rendering
+            updateChart(data.chart_data);
+        }
+
+        // 4. Chart.js Configuration
+        function updateChart(chartData) {
+            const ctx = document.getElementById('weatherChart').getContext('2d');
+            
+            if (weatherChartInstance) {
+                weatherChartInstance.destroy();
+            }
+
+            // Create gradient for temperature
+            const gradientTemp = ctx.createLinearGradient(0, 0, 0, 300);
+            gradientTemp.addColorStop(0, 'rgba(234, 88, 12, 0.5)'); // Orange
+            gradientTemp.addColorStop(1, 'rgba(234, 88, 12, 0.0)');
+
+            weatherChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [
+                        {
+                            label: 'Temperatura (°C)',
+                            data: chartData.temps,
+                            borderColor: '#ea580c', // Stone-orange accent
+                            backgroundColor: gradientTemp,
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Deszcz (%)',
+                            data: chartData.precip_prob,
+                            borderColor: '#3b82f6', // Blue
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 1,
+                            type: 'bar',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(28, 25, 23, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#d6d3d1',
+                            padding: 10,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#78716c', maxTicksLimit: 8 }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            grid: { color: '#f5f5f4' },
+                            ticks: { color: '#78716c' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: false, // Hide the probability scale to keep it clean
+                            position: 'right',
+                            min: 0,
+                            max: 100,
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 5. User Interaction & Timer Logic
+        function updateWeather() {
+            const city = document.getElementById('city-input').value;
+            const interval = parseInt(document.getElementById('refresh-interval').value);
+
+            // Fetch immediately
+            fetchWeatherData(city);
+
+            // Clear existing timer
+            if (refreshTimer) clearInterval(refreshTimer);
+
+            // Set new timer (convert min to ms)
+            if (interval > 0) {
+                refreshTimer = setInterval(() => {
+                    fetchWeatherData(city);
+                }, interval * 60 * 1000);
+            }
+        }
+
+        // Initial Load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateWeather();
+        });
+
+    </script>
+</body>
+</html>
