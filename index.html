@@ -44,12 +44,11 @@
             backdrop-filter: blur(10px);
         }
 
-        /* Chart wrapper fills the remaining space precisely */
         .chart-wrapper {
             position: relative;
             width: 100%;
             height: 100%;
-            overflow: hidden; /* Prevent spillover */
+            overflow: hidden;
         }
     </style>
 </head>
@@ -58,7 +57,7 @@
     <!-- MAIN CONTAINER -->
     <main class="station-card w-[98%] h-[98%] md:w-[92%] md:h-[92%] bg-white dark:bg-stone-900 rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden border-2 md:border-4 border-stone-300 dark:border-stone-800 flex flex-col relative">
         
-        <!-- TOP BAR: Controls & Date -->
+        <!-- TOP BAR -->
         <header class="flex justify-between items-center px-3 py-1 md:py-2 bg-stone-100 dark:bg-stone-950 border-b border-stone-300 dark:border-stone-800 shrink-0 h-10 md:h-14">
             <div class="flex items-center gap-2 w-1/2">
                 <input type="text" id="city-input" value="Warszawa" 
@@ -79,20 +78,14 @@
             <!-- LEFT PANEL: Time, Icon, Big Temp -->
             <div class="flex flex-col justify-center items-center p-1 md:p-2 border-b md:border-b-0 md:border-r border-stone-300 dark:border-stone-800 relative bg-stone-50 dark:bg-stone-900/50">
                 
-                <!-- Hidden Refresh Area -->
-                <button onclick="updateWeather()" class="absolute top-0 left-0 p-4 opacity-0 w-16 h-16" aria-label="Odśwież"></button>
+                <button onclick="updateWeather()" class="absolute top-0 left-0 p-4 opacity-0 w-16 h-16 z-10" aria-label="Odśwież"></button>
 
-                <!-- CLOCK -->
-                <div id="digital-clock" class="text-6xl md:text-8xl font-black font-mono tracking-tighter text-stone-800 dark:text-stone-100 leading-none mb-1 md:mb-4">
+                <div id="digital-clock" class="text-6xl md:text-8xl font-black font-mono tracking-tighter text-stone-800 dark:text-white leading-none mb-1 md:mb-4">
                     00:00
                 </div>
 
-                <!-- WEATHER ICON & TEMP ROW -->
                 <div class="flex items-center justify-center gap-4 md:gap-10 mt-1 md:mt-2">
-                    <!-- Icon Container -->
-                    <div id="weather-icon-container" class="w-20 h-20 md:w-36 md:h-36 text-stone-700 dark:text-stone-200 shrink-0">
-                        <!-- SVG injected by JS -->
-                    </div>
+                    <div id="weather-icon-container" class="w-20 h-20 md:w-36 md:h-36 text-stone-700 dark:text-stone-200 shrink-0"></div>
 
                     <div class="flex flex-col leading-none">
                         <div class="flex items-start">
@@ -102,55 +95,58 @@
                     </div>
                 </div>
 
-                <!-- CONDITION TEXT -->
-                <div id="display-condition" class="text-lg md:text-3xl font-bold text-stone-500 dark:text-stone-400 mt-2 md:mt-6 uppercase tracking-widest text-center truncate w-full px-2">
+                <div id="display-condition" class="text-lg md:text-3xl font-bold text-stone-500 dark:text-stone-300 mt-2 md:mt-6 uppercase tracking-widest text-center truncate w-full px-2">
                     Ładowanie...
                 </div>
             </div>
 
             <!-- RIGHT PANEL: Details & Chart -->
-            <div class="flex flex-col h-full bg-white dark:bg-stone-900 overflow-hidden">
+            <div class="flex flex-col h-full bg-white dark:bg-stone-900 overflow-hidden relative">
                 
-                <!-- 4-GRID METRICS (Height reduced to 40% to save space for chart) -->
+                <!-- 4-GRID METRICS -->
+                <!-- Use overflow-hidden to prevent overlap with chart. Adjusted font sizes for small screens. -->
                 <div class="grid grid-cols-2 h-[40%] border-b border-stone-300 dark:border-stone-800">
                     <!-- Metric 1 -->
-                    <div class="flex flex-col justify-center items-center border-r border-b border-stone-200 dark:border-stone-800 p-1">
-                        <span class="text-stone-400 text-[10px] md:text-sm font-bold uppercase">Odczuwalna</span>
-                        <span id="metric-feels-like" class="text-2xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--°</span>
+                    <div class="flex flex-col justify-center items-center border-r border-b border-stone-200 dark:border-stone-800 p-1 overflow-hidden">
+                        <span class="text-stone-400 dark:text-stone-500 text-[10px] md:text-sm font-bold uppercase truncate">Odczuwalna</span>
+                        <span id="metric-feels-like" class="text-xl md:text-4xl font-bold text-stone-700 dark:text-white truncate">--°</span>
                     </div>
                     <!-- Metric 2 -->
-                    <div class="flex flex-col justify-center items-center border-b border-stone-200 dark:border-stone-800 p-1">
-                        <span class="text-stone-400 text-[10px] md:text-sm font-bold uppercase">Wiatr</span>
+                    <div class="flex flex-col justify-center items-center border-b border-stone-200 dark:border-stone-800 p-1 overflow-hidden">
+                        <span class="text-stone-400 dark:text-stone-500 text-[10px] md:text-sm font-bold uppercase truncate">Wiatr</span>
                         <div class="flex items-baseline gap-1">
-                            <span id="metric-wind" class="text-2xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--</span>
-                            <span class="text-sm font-bold text-stone-500">km/h</span>
+                            <span id="metric-wind" class="text-xl md:text-4xl font-bold text-stone-700 dark:text-white truncate">--</span>
+                            <span class="text-xs md:text-sm font-bold text-stone-500">km/h</span>
                         </div>
                     </div>
                     <!-- Metric 3 -->
-                    <div class="flex flex-col justify-center items-center border-r border-stone-200 dark:border-stone-800 p-1">
-                        <span class="text-stone-400 text-[10px] md:text-sm font-bold uppercase">Wilgotność</span>
-                        <span id="metric-humidity" class="text-2xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--%</span>
+                    <div class="flex flex-col justify-center items-center border-r border-stone-200 dark:border-stone-800 p-1 overflow-hidden">
+                        <span class="text-stone-400 dark:text-stone-500 text-[10px] md:text-sm font-bold uppercase truncate">Wilgotność</span>
+                        <span id="metric-humidity" class="text-xl md:text-4xl font-bold text-stone-700 dark:text-white truncate">--%</span>
                     </div>
                     <!-- Metric 4 -->
-                    <div class="flex flex-col justify-center items-center p-1">
-                        <span class="text-stone-400 text-[10px] md:text-sm font-bold uppercase">Opady</span>
+                    <div class="flex flex-col justify-center items-center p-1 overflow-hidden">
+                        <span class="text-stone-400 dark:text-stone-500 text-[10px] md:text-sm font-bold uppercase truncate">Opady</span>
                         <div class="flex items-baseline gap-1">
-                            <span id="metric-precip" class="text-2xl md:text-5xl font-bold text-stone-700 dark:text-stone-200">--</span>
-                            <span class="text-sm font-bold text-stone-500">mm</span>
+                            <span id="metric-precip" class="text-xl md:text-4xl font-bold text-stone-700 dark:text-white truncate">--</span>
+                            <span class="text-xs md:text-sm font-bold text-stone-500">mm</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- CHART AREA (Height increased to 60%) -->
+                <!-- CHART AREA -->
                 <div class="h-[60%] flex flex-col justify-center bg-stone-50 dark:bg-stone-900/30 pb-1 relative">
-                    <!-- Legend -->
                     <div class="absolute top-1 left-3 right-3 flex justify-between items-center z-10 pointer-events-none">
                         <span class="text-[10px] font-bold uppercase text-stone-400">Temp</span>
                         <span class="text-[10px] font-bold uppercase text-blue-500">Opady</span>
                     </div>
-                    <!-- Wrapper with padding to prevent cut-off -->
-                    <div class="chart-wrapper px-2 pb-2 pt-4">
+                    <div class="chart-wrapper px-2 pb-5 pt-4"> <!-- Increased bottom padding for timestamp -->
                         <canvas id="weatherChart"></canvas>
+                    </div>
+                    
+                    <!-- LAST UPDATED TIMESTAMP (Small in corner) -->
+                    <div id="last-updated" class="absolute bottom-1 right-2 text-[9px] font-mono text-stone-400 dark:text-stone-600">
+                        Aktualizacja: --:--
                     </div>
                 </div>
             </div>
@@ -254,6 +250,11 @@
                         probs: wData.hourly.precipitation_probability
                     }
                 });
+                
+                // Update Timestamp
+                const now = new Date();
+                document.getElementById('last-updated').textContent = `Aktualizacja: ${now.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}`;
+                
             } catch (e) {
                 console.error(e);
             } finally {
@@ -283,10 +284,9 @@
             const isDark = htmlEl.classList.contains('dark');
             const colorLine = '#ea580c'; 
             const colorBar = '#3b82f6';
-            const colorText = isDark ? '#a8a29e' : '#57534e';
+            const colorText = isDark ? '#d6d3d1' : '#57534e'; // Lighter text in dark mode (stone-300)
             const colorGrid = isDark ? '#292524' : '#e5e7eb';
             
-            // Adjust font size based on height (responsive check)
             const isSmallScreen = window.innerHeight < 500;
             const fontSize = isSmallScreen ? 10 : 12;
 
@@ -329,7 +329,7 @@
                     maintainAspectRatio: false,
                     layout: {
                         padding: {
-                            bottom: 5 // Ensure labels aren't cut off at the very bottom
+                            bottom: 5 
                         }
                     },
                     plugins: { 
